@@ -6,7 +6,7 @@ from PIL import Image
 from datetime import datetime
 
 
-def generate_html(path_to_data):
+def generate_html(path_to_data="results\\examples"):
     """Generates content of html file and saves it.
 
     Parameters
@@ -20,16 +20,17 @@ def generate_html(path_to_data):
         Content of html file.
 
     """
+
     html = "\n".join(["<!doctype html>", "<html>", "<head>",
                       "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>",
                       "<title>Визуализация результатов</title>", "</head>", "<body>",
                       "<table cellspacing='0' cellpadding='5'>"]) + "\n"
     paths_to_imgs = sorted(
-        ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_img.jpg")])
+        ["\\".join(path.split("\\")[-2:]) for path in glob(f"{path_to_data}\\*_img.jpg")])
     paths_to_masks = sorted(
-        ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_pred_mask.png")])
+        ["\\".join(path.split("\\")[-2:]) for path in glob(f"{path_to_data}\\*_pred_mask.png")])
     paths_to_crops = sorted(
-        ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_crop.png")])
+        ["\\".join(path.split("\\")[-2:]) for path in glob(f"{path_to_data}\\*_crop.png")])
     for ind, (path_to_img, path_to_mask, path_to_crop) in enumerate(zip(paths_to_imgs,
                                                                         paths_to_masks,
                                                                         paths_to_crops)):
@@ -58,7 +59,7 @@ def generate_html(path_to_data):
     return html
 
 
-def get_html(paths_to_imgs, pred_masks, path_to_save="results/test"):
+def get_html(paths_to_imgs, pred_masks, path_to_save="results\\test"):
     """Generates html file and saves it.
 
     Parameters
@@ -88,7 +89,7 @@ def get_html(paths_to_imgs, pred_masks, path_to_save="results/test"):
     pred_masks = pred_masks[order]
 
     for path_to_img, pred_mask in zip(paths_to_imgs, pred_masks):
-        img_id = path_to_img.split("/")[-1].split(".")[0]
+        img_id = path_to_img.split("\\")[-1].split(".")[0]
         img = np.array(Image.open(path_to_img))
         Image.fromarray(img).save(f"{path_to_save}/{img_id}_img.jpg")
         Image.fromarray(pred_mask).save(f"{path_to_save}/{img_id}_pred_mask.png")

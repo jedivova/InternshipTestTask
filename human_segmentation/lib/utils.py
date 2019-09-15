@@ -1,5 +1,14 @@
 import numpy as np
+from tqdm import tqdm
+from glob import glob
+from skimage.io import imread
+from skimage.transform import resize
+import tensorflow as tf
+from keras import backend as K
 
+IMG_WIDTH = 240
+IMG_HEIGHT = 320
+IMG_CHANNELS = 3
 
 def encode_rle(mask):
     """Returns encoded mask (run length) as a string.
@@ -53,3 +62,37 @@ def decode_rle(rle_mask, shape=(320, 240)):
         img[low:high] = 1
 
     return img.reshape(shape)
+
+
+# functions to get and resize images and masks, returns np.array
+
+def Get_IMGs(PATH):
+    path_to_imgs = sorted(glob(PATH + "*"))
+    X_train = np.zeros((len(path_to_imgs), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+    # os.stdout.flush()
+    for n, id_ in tqdm(enumerate(path_to_imgs), total=len(path_to_imgs)):
+        img = imread(path_to_imgs[n])
+        img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+        X_train[n] = img
+    return X_train
+
+
+def Get_Masks(PATH):
+    path_to_imgs = sorted(glob(PATH + "*"))
+    Y_train = np.zeros((len(path_to_imgs), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
+    for n, id_ in tqdm(enumerate(path_to_imgs), total=len(path_to_imgs)):
+        mask_ = imread(path_to_imgs[n])
+        mask_ = np.expand_dims(resize(mask_, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True), axis=-1)
+        Y_train[n] = mask_
+    return Y_train
+
+def mean_iou(y_true, y_pred): # Define IoU metric
+    prec = []
+    for t in np.arange(0.5, 1.0, 0.05):
+        y_pred_ = tf.to_int32(y_pred > t)
+        score, up_opt = tf.metrics.mean_iou(y_true, y_pred_, 2)
+        K.get_session().run(tf.local_variables_initializer())
+        with tf.control_dependencies([up_opt]):
+            score = tf.identity(score)
+        prec.append(score)
+    return K.mean(K.stack(prec), axis=0)
